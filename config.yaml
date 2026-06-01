@@ -1,0 +1,18 @@
+active_model: gemma3:4b
+provider: ollama
+
+ollama:
+  host: http://localhost:11434
+  request_timeout_seconds: 120
+
+generation:
+  temperature: 0.4
+  context_window: 2048
+
+memory:
+  runtime_max_messages: 10
+  database_path: data/jarvis_memory.sqlite3
+  retrieval_limit: 5
+
+prompts:
+  personality_path: jarvis/prompts/personality.md
