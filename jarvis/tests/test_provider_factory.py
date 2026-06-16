@@ -19,6 +19,19 @@ class ProviderFactoryTests(TestCase):
             temperature=0.1,
             context_window=512,
             personality_path=Path("personality.md"),
+            rag_enabled=False,
+            rag_vector_backend="memory",
+            rag_collection_name="test",
+            rag_uploads_path=Path("uploads"),
+            rag_processed_path=Path("processed"),
+            rag_indexes_path=Path("indexes"),
+            rag_chunk_size=500,
+            rag_chunk_overlap=50,
+            rag_top_k=2,
+            rag_similarity_threshold=0.1,
+            rag_embedding_provider="hashing",
+            rag_embedding_model="test-hashing",
+            rag_embedding_dimensions=64,
         )
 
         client = create_model_client(settings)

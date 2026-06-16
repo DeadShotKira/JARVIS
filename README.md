@@ -1,6 +1,6 @@
-# JARVIS v0.2
+# JARVIS v0.3
 
-Phase 2 memory-enabled local assistant foundation.
+Phase 3 memory-enabled local assistant with a document knowledge base and RAG.
 
 ## Goal
 
@@ -9,10 +9,13 @@ User
   -> Terminal
   -> Python
   -> Memory Manager
+  -> Document Retriever
+  -> Context Builder
   -> Ollama
   -> Local model
   -> Memory Updater
   -> SQLite
+  -> ChromaDB
 ```
 
 No cloud APIs. No paid services. No API keys.
@@ -38,7 +41,23 @@ Expected startup:
 ```text
 JARVIS ONLINE
 Brain: gemma3:4b
+RAG: enabled
 ```
+
+## Knowledge Commands
+
+Phase 3 adds local document ingestion and retrieval:
+
+```powershell
+/knowledge add C:\path\to\DBMS_Notes.pdf
+/knowledge list
+/knowledge metadata DBMS_Notes.pdf
+/knowledge remove DBMS_Notes.pdf
+/knowledge rebuild
+```
+
+ChromaDB is the primary vector backend. FAISS is available behind the same
+`VectorStore` abstraction for later backend swaps.
 
 ## Memory Test
 
@@ -60,16 +79,21 @@ Jarvis receives the stored project memory from SQLite before generating the answ
 
 ```text
 jarvis/
-├── main.py
-├── brain/
-├── config/
-├── database/
-├── docs/
-├── memory/
-├── models/
-├── prompts/
-├── requirements/
-└── tests/
+  main.py
+  brain/
+  config/
+  database/
+  docs/
+  knowledge/
+    uploads/
+    processed/
+    indexes/
+  memory/
+  models/
+  prompts/
+  rag/
+  requirements/
+  tests/
 ```
 
 ## Configuration
@@ -80,7 +104,17 @@ Model selection is configuration-driven. To change the active brain, edit:
 active_model: gemma3:4b
 ```
 
-The application logic does not need to change when switching between local models.
+RAG is also configuration-driven:
+
+```yaml
+rag:
+  vector_backend: chromadb
+  embedding_provider: hashing
+  embedding_model: local-hashing-v1
+```
+
+The application logic does not need to change when switching local models,
+embedding providers, or vector backends.
 
 ## Tests
 
@@ -90,4 +124,5 @@ python -m unittest discover -s jarvis/tests
 
 ## Phase Boundaries
 
-Phase 2 implements persistent memory, categorization, retrieval, and SQLite storage. It intentionally does not implement RAG, voice, agents, home automation, or vision.
+Phase 3 implements local document RAG. It intentionally does not implement voice,
+agents, home automation, or vision.

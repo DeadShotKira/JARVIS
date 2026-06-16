@@ -28,6 +28,19 @@ class FakeMemoryManager:
         return []
 
 
+class FakeRagManager:
+    def build_context(self, user_query, memory_context=None):
+        return "\n\n".join(
+            item
+            for item in [
+                memory_context,
+                "Relevant documents:\n[1] Source: notes.md\nJarvis uses local RAG.",
+                f"User question:\n{user_query}",
+            ]
+            if item
+        )
+
+
 class AssistantTests(TestCase):
     def test_assistant_injects_system_prompt_and_updates_runtime_memory(self):
         client = FakeClient()
@@ -61,3 +74,18 @@ class AssistantTests(TestCase):
 
         self.assertEqual(client.calls[0][1].role, "system")
         self.assertIn("Atharva is building Jarvis.", client.calls[0][1].content)
+
+    def test_assistant_injects_rag_context_when_available(self):
+        client = FakeClient()
+        assistant = JarvisAssistant(
+            client=client,
+            runtime_memory=RuntimeMemory(max_messages=10),
+            memory_manager=FakeMemoryManager(),
+            system_prompt="You are Jarvis.",
+            rag_manager=FakeRagManager(),
+        )
+
+        assistant.respond("What does Jarvis use?")
+
+        self.assertEqual(client.calls[0][1].role, "system")
+        self.assertIn("Source: notes.md", client.calls[0][1].content)

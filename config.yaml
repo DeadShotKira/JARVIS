@@ -1,18 +1,33 @@
-active_model: gemma3:4b
+active_model: gemma3:12b
 provider: ollama
 
 ollama:
   host: http://localhost:11434
-  request_timeout_seconds: 120
+  request_timeout_seconds: 180
 
 generation:
-  temperature: 0.4
-  context_window: 2048
+  temperature: 0.6
+  context_window: 4096
 
 memory:
-  runtime_max_messages: 10
+  runtime_max_messages: 15
   database_path: data/jarvis_memory.sqlite3
-  retrieval_limit: 5
+  retrieval_limit: 8
+
+rag:
+  enabled: true
+  vector_backend: chromadb
+  collection_name: jarvis_knowledge
+  uploads_path: jarvis/knowledge/uploads
+  processed_path: jarvis/knowledge/processed
+  indexes_path: jarvis/knowledge/indexes
+  chunk_size: 900
+  chunk_overlap: 150
+  top_k: 5
+  similarity_threshold: 0.25
+  embedding_provider: hashing
+  embedding_model: local-hashing-v1
+  embedding_dimensions: 384
 
 prompts:
   personality_path: jarvis/prompts/personality.md

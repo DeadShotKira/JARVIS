@@ -31,6 +31,18 @@ PHASE_1_CANDIDATES = [
         pi_suitability="Good, but test licensing and exact tag availability before deployment.",
     ),
     ModelCandidate(
+    name="Gemma",
+    ollama_tag="gemma3:12b",
+    strengths="Strong general-purpose assistant with excellent instruction following, reasoning, and conversational quality.",
+    pi_suitability="Not intended for Raspberry Pi deployment. Best suited for desktop-class systems with at least 16 GB RAM.",
+    ),
+    ModelCandidate(
+        name="Gemma 4",
+        ollama_tag="gemma4:26b",
+        strengths="Much stronger reasoning, coding, and instruction following than the small Gemma models.",
+        pi_suitability="Not suitable for Raspberry Pi deployment. Intended for powerful desktops, servers, or cloud GPUs.",
+    ),
+    ModelCandidate(
         name="TinyLlama",
         ollama_tag="tinyllama:1.1b",
         strengths="Very light and fast for simple tasks.",

@@ -25,6 +25,20 @@ class SettingsTests(TestCase):
                         "  runtime_max_messages: 6",
                         "  database_path: data/test.sqlite3",
                         "  retrieval_limit: 3",
+                        "rag:",
+                        "  enabled: true",
+                        "  vector_backend: memory",
+                        "  collection_name: test_knowledge",
+                        "  uploads_path: knowledge/uploads",
+                        "  processed_path: knowledge/processed",
+                        "  indexes_path: knowledge/indexes",
+                        "  chunk_size: 500",
+                        "  chunk_overlap: 50",
+                        "  top_k: 2",
+                        "  similarity_threshold: 0.1",
+                        "  embedding_provider: hashing",
+                        "  embedding_model: test-hashing",
+                        "  embedding_dimensions: 64",
                         "prompts:",
                         "  personality_path: prompts/personality.md",
                     ]
@@ -38,3 +52,7 @@ class SettingsTests(TestCase):
         self.assertEqual(settings.runtime_max_messages, 6)
         self.assertEqual(settings.temperature, 0.2)
         self.assertEqual(settings.memory_database_path, (root / "data/test.sqlite3").resolve())
+        self.assertTrue(settings.rag_enabled)
+        self.assertEqual(settings.rag_vector_backend, "memory")
+        self.assertEqual(settings.rag_chunk_size, 500)
+        self.assertEqual(settings.rag_embedding_model, "test-hashing")

@@ -14,5 +14,20 @@ memory:
   database_path: data/jarvis_memory.sqlite3
   retrieval_limit: 5
 
+rag:
+  enabled: true
+  vector_backend: chromadb
+  collection_name: jarvis_knowledge
+  uploads_path: jarvis/knowledge/uploads
+  processed_path: jarvis/knowledge/processed
+  indexes_path: jarvis/knowledge/indexes
+  chunk_size: 900
+  chunk_overlap: 150
+  top_k: 4
+  similarity_threshold: 0.25
+  embedding_provider: hashing
+  embedding_model: local-hashing-v1
+  embedding_dimensions: 384
+
 prompts:
   personality_path: jarvis/prompts/personality.md

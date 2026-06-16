@@ -11,3 +11,9 @@ ollama/
 data/*.sqlite3
 data/*.sqlite3-shm
 data/*.sqlite3-wal
+jarvis/knowledge/uploads/*
+jarvis/knowledge/processed/*
+jarvis/knowledge/indexes/*
+!jarvis/knowledge/uploads/.gitkeep
+!jarvis/knowledge/processed/.gitkeep
+!jarvis/knowledge/indexes/.gitkeep

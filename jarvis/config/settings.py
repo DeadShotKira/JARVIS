@@ -27,6 +27,19 @@ class Settings:
     temperature: float
     context_window: int
     personality_path: Path
+    rag_enabled: bool
+    rag_vector_backend: str
+    rag_collection_name: str
+    rag_uploads_path: Path
+    rag_processed_path: Path
+    rag_indexes_path: Path
+    rag_chunk_size: int
+    rag_chunk_overlap: int
+    rag_top_k: int
+    rag_similarity_threshold: float
+    rag_embedding_provider: str
+    rag_embedding_model: str
+    rag_embedding_dimensions: int
 
 
 def load_settings(config_path: Path | None = None) -> Settings:
@@ -62,6 +75,19 @@ def load_settings(config_path: Path | None = None) -> Settings:
             config_base,
             _required_str(config, "prompts.personality_path"),
         ),
+        rag_enabled=_required_bool(config, "rag.enabled"),
+        rag_vector_backend=_required_str(config, "rag.vector_backend"),
+        rag_collection_name=_required_str(config, "rag.collection_name"),
+        rag_uploads_path=_resolve_path(config_base, _required_str(config, "rag.uploads_path")),
+        rag_processed_path=_resolve_path(config_base, _required_str(config, "rag.processed_path")),
+        rag_indexes_path=_resolve_path(config_base, _required_str(config, "rag.indexes_path")),
+        rag_chunk_size=_required_int(config, "rag.chunk_size"),
+        rag_chunk_overlap=_required_int(config, "rag.chunk_overlap"),
+        rag_top_k=_required_int(config, "rag.top_k"),
+        rag_similarity_threshold=_required_float(config, "rag.similarity_threshold"),
+        rag_embedding_provider=_required_str(config, "rag.embedding_provider"),
+        rag_embedding_model=_required_str(config, "rag.embedding_model"),
+        rag_embedding_dimensions=_required_int(config, "rag.embedding_dimensions"),
     )
 
 
@@ -93,6 +119,13 @@ def _required_float(config: dict[str, Any], dotted_key: str) -> float:
     if not isinstance(value, (float, int)):
         raise TypeError(f"{dotted_key} must be a number")
     return float(value)
+
+
+def _required_bool(config: dict[str, Any], dotted_key: str) -> bool:
+    value = _required(config, dotted_key)
+    if not isinstance(value, bool):
+        raise TypeError(f"{dotted_key} must be a boolean")
+    return value
 
 
 def _resolve_path(base: Path, value: str) -> Path:
