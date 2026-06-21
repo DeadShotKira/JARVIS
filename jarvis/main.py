@@ -16,6 +16,8 @@ from jarvis.memory.memory_manager import MemoryManager
 from jarvis.memory.runtime_memory import RuntimeMemory
 from jarvis.prompts.loader import load_personality_prompt
 from jarvis.rag.rag_manager import RagManager
+from jarvis.graph_memory.graph_memory_manager import GraphMemoryManager
+
 
 
 def build_assistant(settings: Settings | None = None) -> JarvisAssistant:
@@ -29,6 +31,7 @@ def build_assistant(settings: Settings | None = None) -> JarvisAssistant:
     )
     personality_prompt = load_personality_prompt(resolved_settings.personality_path)
     rag_manager = RagManager.from_settings(resolved_settings) if resolved_settings.rag_enabled else None
+    graph_manager = GraphMemoryManager.from_settings(resolved_settings) if resolved_settings.graph_enabled else None
 
     return JarvisAssistant(
         client=client,
@@ -36,7 +39,9 @@ def build_assistant(settings: Settings | None = None) -> JarvisAssistant:
         memory_manager=memory_manager,
         system_prompt=personality_prompt,
         rag_manager=rag_manager,
+        graph_manager=graph_manager,
     )
+
 
 
 def main() -> None:
@@ -47,8 +52,10 @@ def main() -> None:
     print("JARVIS ONLINE")
     print(f"Brain: {settings.active_model}")
     print(f"RAG: {'enabled' if settings.rag_enabled else 'disabled'}")
+    print(f"Graph: {'enabled' if settings.graph_enabled else 'disabled'}")
     print("Type 'exit' or 'quit' to shut down.\n")
-    print("Knowledge commands: /knowledge add <path>, list, remove <id|filename>, rebuild, metadata <id|filename>\n")
+    print("Knowledge commands: /knowledge add <path>, list, remove <id|filename>, rebuild, metadata <id|filename>")
+    print("Graph commands: /graph status, entities, relationships <name>, search <query>, extract <text>\n")
 
     while True:
         try:
@@ -61,12 +68,20 @@ def main() -> None:
             continue
 
         if user_input.lower() in {"exit", "quit"}:
+            if assistant.graph_manager:
+                assistant.graph_manager.close()
             print("\nJarvis:\nPowering down. Try not to miss me too much.")
             return
 
         if user_input.startswith("/knowledge"):
             print("\nJarvis:")
             print(handle_knowledge_command(assistant, user_input))
+            print()
+            continue
+
+        if user_input.startswith("/graph"):
+            print("\nJarvis:")
+            print(handle_graph_command(assistant, user_input))
             print()
             continue
 
@@ -80,6 +95,7 @@ def main() -> None:
         print("\nJarvis:")
         print(response)
         print()
+
 
 
 def handle_knowledge_command(assistant: JarvisAssistant, command: str) -> str:
@@ -142,5 +158,106 @@ def _knowledge_help() -> str:
     )
 
 
+def handle_graph_command(assistant: JarvisAssistant, command: str) -> str:
+    """Handle local knowledge-graph commands."""
+    if assistant.graph_manager is None:
+        return "Knowledge graph is disabled in configuration or Neo4j is offline."
+
+    parts = command.strip().split(maxsplit=2)
+    if len(parts) == 1:
+        return _graph_help()
+
+    action = parts[1].lower()
+    argument = parts[2].strip().strip('"') if len(parts) > 2 else ""
+
+    if action == "status":
+        status = assistant.graph_manager.get_status()
+        if not status.get("connected", False):
+            return f"Neo4j Offline (URI: {status.get('uri')})"
+        return (
+            f"Neo4j Online (URI: {status.get('uri')})\n"
+            f"Nodes: {status.get('node_count', 0)}\n"
+            f"Relationships: {status.get('relationship_count', 0)}"
+        )
+
+    if action == "entities":
+        entities = assistant.graph_manager.list_entities()
+        if not entities:
+            return "No entities found in the graph."
+        # Group entities by type
+        grouped: dict[str, list[str]] = {}
+        for ent in entities:
+            grouped.setdefault(ent["type"], []).append(ent["name"])
+        lines = ["Graph Entities:"]
+        for ent_type, names in sorted(grouped.items()):
+            lines.append(f"  [{ent_type}]")
+            for name in sorted(names):
+                lines.append(f"    - {name}")
+        return "\n".join(lines)
+
+    if action == "relationships":
+        if not argument:
+            return "Usage: /graph relationships <entity_name>"
+        rels = assistant.graph_manager.service.get_relationships(argument)
+        if not rels:
+            return f"No relationships found for entity '{argument}'."
+        lines = [f"Relationships for '{argument}':"]
+        for record in rels:
+            rel = record["relationship"]
+            neighbor = record["neighbor_name"]
+            outgoing = record.get("outgoing", True)
+            props = record.get("properties", {})
+            props_str = f" ({props})" if props else ""
+            if outgoing:
+                lines.append(f"  - ({argument})-[:{rel}{props_str}]->({neighbor})")
+            else:
+                lines.append(f"  - ({neighbor})-[:{rel}{props_str}]->({argument})")
+        return "\n".join(lines)
+
+    if action == "search":
+        if not argument:
+            return "Usage: /graph search <query>"
+        results = assistant.graph_manager.service.search_entities(argument)
+        if not results:
+            return f"No entities found matching '{argument}'."
+        lines = [f"Search results for '{argument}':"]
+        for res in results:
+            labels_str = ":".join(res["labels"])
+            lines.append(f"  - {res['name']} (:{labels_str}) [score: {res['score']:.2f}]")
+        return "\n".join(lines)
+
+    if action == "extract":
+        if not argument:
+            return "Usage: /graph extract <text>"
+        # Run extraction without storing
+        entities = assistant.graph_manager.entity_extractor.extract(argument)
+        rels = assistant.graph_manager.relationship_extractor.extract(argument, entities)
+        lines = [f"Extracted from text: '{argument}'"]
+        lines.append("\nEntities:")
+        if not entities:
+            lines.append("  None")
+        for ent in entities:
+            lines.append(f"  - {ent.name} (:{ent.entity_type.value})")
+        lines.append("\nRelationships:")
+        if not rels:
+            lines.append("  None")
+        for rel in rels:
+            lines.append(
+                f"  - ({rel.source_entity.name})-[:{rel.relationship_type.value}]->({rel.target_entity.name})"
+            )
+        return "\n".join(lines)
+
+    return _graph_help()
+
+
+def _graph_help() -> str:
+    return (
+        "Usage: /graph status | /graph entities | "
+        "/graph relationships <entity_name> | /graph search <query> | "
+        "/graph extract <text>"
+    )
+
+
 if __name__ == "__main__":
     main()
+

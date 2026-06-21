@@ -1,6 +1,6 @@
-# JARVIS v0.3
+# JARVIS v0.4
 
-Phase 3 memory-enabled local assistant with a document knowledge base and RAG.
+Phase 4 memory-enabled local assistant with a persistent Personal Knowledge Graph (Neo4j) alongside document retrieval (RAG) and SQLite episodic memory.
 
 ## Goal
 
@@ -8,31 +8,31 @@ Phase 3 memory-enabled local assistant with a document knowledge base and RAG.
 User
   -> Terminal
   -> Python
-  -> Memory Manager
-  -> Document Retriever
-  -> Context Builder
+  -> Memory Manager (SQLite)
+  -> Graph Memory Manager (Neo4j)
+  -> Document Retriever (ChromaDB)
+  -> Context Builder & Aggregator
   -> Ollama
   -> Local model
-  -> Memory Updater
-  -> SQLite
-  -> ChromaDB
+  -> Memory / Graph Updaters
 ```
 
 No cloud APIs. No paid services. No API keys.
 
 ## Quick Start
 
-Install Python, Git, VS Code, and Ollama. Then check `config.yaml`:
+Install Python, Git, VS Code, Ollama, and Docker. Then check `config.yaml`:
 
 ```yaml
-active_model: gemma3:4b
+active_model: gemma3:12b
 provider: ollama
 ```
 
-Pull the configured model and start Jarvis:
+Start Neo4j and Ollama via Docker Compose, pull the configured model, and run Jarvis:
 
 ```powershell
-ollama run gemma3:4b
+docker compose up -d
+ollama run gemma3:12b
 python main.py
 ```
 
@@ -40,8 +40,9 @@ Expected startup:
 
 ```text
 JARVIS ONLINE
-Brain: gemma3:4b
+Brain: gemma3:12b
 RAG: enabled
+Graph: enabled
 ```
 
 ## Knowledge Commands
@@ -59,6 +60,18 @@ Phase 3 adds local document ingestion and retrieval:
 ChromaDB is the primary vector backend. FAISS is available behind the same
 `VectorStore` abstraction for later backend swaps.
 
+## Graph Commands
+
+Phase 4 adds a persistent personal knowledge graph using Neo4j to store structured connections between entities (people, projects, technologies, interests, etc.):
+
+```powershell
+/graph status
+/graph entities
+/graph relationships Atharva
+/graph search Neo4j
+/graph extract "I'm building Jarvis using Python and Neo4j"
+```
+
 ## Memory Test
 
 Run Jarvis and say:
@@ -73,7 +86,7 @@ Exit, restart, then ask:
 What projects am I working on?
 ```
 
-Jarvis receives the stored project memory from SQLite before generating the answer.
+Jarvis receives the stored project memory from SQLite and the relationships from Neo4j before generating the answer.
 
 ## Project Structure
 
@@ -84,6 +97,7 @@ jarvis/
   config/
   database/
   docs/
+  graph_memory/     # Phase 4 Knowledge Graph Memory
   knowledge/
     uploads/
     processed/
@@ -101,20 +115,27 @@ jarvis/
 Model selection is configuration-driven. To change the active brain, edit:
 
 ```yaml
-active_model: gemma3:4b
+active_model: gemma3:12b
 ```
 
-RAG is also configuration-driven:
+RAG and Graph configuration are also fully configuration-driven:
 
 ```yaml
 rag:
   vector_backend: chromadb
   embedding_provider: hashing
   embedding_model: local-hashing-v1
+
+graph:
+  enabled: true
+  uri: bolt://localhost:7687
+  username: neo4j
+  password: jarvis_local
+  extraction_backend: rule_based
+  use_spacy: true
 ```
 
-The application logic does not need to change when switching local models,
-embedding providers, or vector backends.
+The application logic degrades gracefully if Neo4j is offline or Python dependencies are missing, letting JARVIS boot with the remaining memory layers.
 
 ## Tests
 
@@ -124,5 +145,5 @@ python -m unittest discover -s jarvis/tests
 
 ## Phase Boundaries
 
-Phase 3 implements local document RAG. It intentionally does not implement voice,
-agents, home automation, or vision.
+Phase 4 implements a personal knowledge graph. It intentionally does not implement voice, agents, home automation, or vision.
+

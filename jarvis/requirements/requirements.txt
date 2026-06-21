@@ -6,3 +6,8 @@ sentence-transformers>=2.7.0
 # Secondary vector backend. On some Raspberry Pi builds this may require
 # platform-specific installation steps, so ChromaDB remains the primary path.
 faiss-cpu>=1.8.0
+
+# Phase 4 knowledge graph dependencies
+neo4j>=5.20.0
+spacy>=3.7.0
+

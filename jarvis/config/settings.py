@@ -41,6 +41,16 @@ class Settings:
     rag_embedding_model: str
     rag_embedding_dimensions: int
 
+    # Phase 4 — Knowledge Graph
+    graph_enabled: bool = False
+    graph_uri: str = "bolt://localhost:7687"
+    graph_username: str = "neo4j"
+    graph_password: str = "jarvis_local"
+    graph_database: str = "neo4j"
+    graph_extraction_backend: str = "rule_based"
+    graph_use_spacy: bool = True
+
+
 
 def load_settings(config_path: Path | None = None) -> Settings:
     """Load settings from config.yaml.
@@ -88,6 +98,14 @@ def load_settings(config_path: Path | None = None) -> Settings:
         rag_embedding_provider=_required_str(config, "rag.embedding_provider"),
         rag_embedding_model=_required_str(config, "rag.embedding_model"),
         rag_embedding_dimensions=_required_int(config, "rag.embedding_dimensions"),
+        # Phase 4 — Knowledge Graph (optional section)
+        graph_enabled=_optional_bool(config, "graph.enabled", False),
+        graph_uri=_optional_str(config, "graph.uri", "bolt://localhost:7687"),
+        graph_username=_optional_str(config, "graph.username", "neo4j"),
+        graph_password=_optional_str(config, "graph.password", "jarvis_local"),
+        graph_database=_optional_str(config, "graph.database", "neo4j"),
+        graph_extraction_backend=_optional_str(config, "graph.extraction_backend", "rule_based"),
+        graph_use_spacy=_optional_bool(config, "graph.use_spacy", True),
     )
 
 
@@ -125,6 +143,30 @@ def _required_bool(config: dict[str, Any], dotted_key: str) -> bool:
     value = _required(config, dotted_key)
     if not isinstance(value, bool):
         raise TypeError(f"{dotted_key} must be a boolean")
+    return value
+
+
+def _optional(config: dict[str, Any], dotted_key: str, default: Any) -> Any:
+    """Retrieve a config value or return *default* if the key path is absent."""
+    current: Any = config
+    for part in dotted_key.split("."):
+        if not isinstance(current, dict) or part not in current:
+            return default
+        current = current[part]
+    return current
+
+
+def _optional_str(config: dict[str, Any], dotted_key: str, default: str) -> str:
+    value = _optional(config, dotted_key, default)
+    if not isinstance(value, str):
+        return default
+    return value.strip() or default
+
+
+def _optional_bool(config: dict[str, Any], dotted_key: str, default: bool) -> bool:
+    value = _optional(config, dotted_key, default)
+    if not isinstance(value, bool):
+        return default
     return value
 
 

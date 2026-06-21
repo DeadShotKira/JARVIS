@@ -1,4 +1,4 @@
-active_model: gemma3:12b
+active_model: gemma3:4b
 provider: ollama
 
 ollama:
@@ -31,3 +31,12 @@ rag:
 
 prompts:
   personality_path: jarvis/prompts/personality.md
+
+graph:
+  enabled: true
+  uri: bolt://localhost:7687
+  username: neo4j
+  password: jarvis_local
+  database: neo4j
+  extraction_backend: rule_based
+  use_spacy: true

@@ -5,6 +5,7 @@ services:
       JARVIS_CONFIG_PATH: /app/config.docker.yaml
     depends_on:
       - ollama
+      - neo4j
 
   ollama:
     image: ollama/ollama:latest
@@ -13,5 +14,16 @@ services:
     ports:
       - "11434:11434"
 
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/jarvis_local
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+
 volumes:
   ollama:
+  neo4j_data:
